@@ -4,7 +4,9 @@ export const ACCIDENT_ZONES = [
     name: "Paradise Circle Junction",
     description: "High traffic convergence. Frequent merging accidents.",
     riskLevel: "HIGH",
+    frequency: 145, // Number of incidents in last year
     color: "#FF3B30",
+    center: { lat: 17.4410, lng: 78.4890 },
     path: [
       { lat: 17.4410, lng: 78.4860 },
       { lat: 17.4435, lng: 78.4885 },
@@ -17,7 +19,9 @@ export const ACCIDENT_ZONES = [
     name: "Panjagutta Main Road",
     description: "Congested flyover entry. Sudden braking hazard.",
     riskLevel: "MEDIUM",
+    frequency: 68,
     color: "#FF9500",
+    center: { lat: 17.4255, lng: 78.4515 },
     path: [
       { lat: 17.4255, lng: 78.4490 },
       { lat: 17.4270, lng: 78.4520 },
@@ -30,12 +34,29 @@ export const ACCIDENT_ZONES = [
     name: "LB Nagar Ring Road",
     description: "Heavy vehicle crossing zone. Pedestrian risk high.",
     riskLevel: "HIGH",
+    frequency: 112,
     color: "#FF3B30",
+    center: { lat: 17.3490, lng: 78.5510 },
     path: [
       { lat: 17.3490, lng: 78.5480 },
       { lat: 17.3520, lng: 78.5510 },
       { lat: 17.3480, lng: 78.5540 },
       { lat: 17.3460, lng: 78.5500 }
+    ]
+  },
+  {
+    id: 4,
+    name: "Cyber Towers Junction",
+    description: "Tech hub traffic. High-speed turns and lane changes.",
+    riskLevel: "MEDIUM",
+    frequency: 85,
+    color: "#FF9500",
+    center: { lat: 17.4500, lng: 78.3810 },
+    path: [
+      { lat: 17.4520, lng: 78.3790 },
+      { lat: 17.4520, lng: 78.3830 },
+      { lat: 17.4480, lng: 78.3830 },
+      { lat: 17.4480, lng: 78.3790 }
     ]
   }
 ];

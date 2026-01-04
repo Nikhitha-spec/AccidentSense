@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2 } from 'lucide-react';
 import { ACCIDENT_ZONES, checkZoneIntersection } from '../utils/accidentZones';
@@ -107,6 +107,7 @@ const AccidentMap = () => {
     const [isControlsExpanded, setIsControlsExpanded] = useState(window.innerWidth > 768);
     const [isSearchingSource, setIsSearchingSource] = useState(false);
     const [isSearchingDest, setIsSearchingDest] = useState(false);
+    const [showRiskHeatmap, setShowRiskHeatmap] = useState(true);
 
     const watchId = useRef(null);
     const SPEED_THRESHOLD = 80;
@@ -435,7 +436,35 @@ const AccidentMap = () => {
                 </div>
 
                 <div style={{ marginBottom: '15px', padding: '10px', background: 'rgba(66, 133, 244, 0.1)', borderRadius: '8px', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
-                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '5px', color: '#4285F4' }}>Map Selection Mode</div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#4285F4' }}>Map Configuration</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>Heatmap</span>
+                            <div
+                                onClick={() => setShowRiskHeatmap(!showRiskHeatmap)}
+                                style={{
+                                    width: '34px',
+                                    height: '18px',
+                                    background: showRiskHeatmap ? '#4285F4' : '#333',
+                                    borderRadius: '10px',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    left: showRiskHeatmap ? '18px' : '2px',
+                                    top: '2px',
+                                    width: '14px',
+                                    height: '14px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    transition: 'all 0.3s'
+                                }} />
+                            </div>
+                        </div>
+                    </div>
                     <div style={{ display: 'flex', gap: '5px' }}>
                         <button
                             onClick={() => setSelectionMode('source')}
@@ -708,16 +737,40 @@ const AccidentMap = () => {
                 ))}
 
                 {ACCIDENT_ZONES.map(zone => (
-                    <Polygon
-                        key={zone.id}
-                        positions={zone.path}
-                        pathOptions={{
-                            color: zone.color,
-                            fillColor: zone.color,
-                            fillOpacity: 0.35,
-                            weight: 2
-                        }}
-                    />
+                    <React.Fragment key={zone.id}>
+                        {showRiskHeatmap && (
+                            <Circle
+                                center={[zone.center.lat, zone.center.lng]}
+                                radius={Math.sqrt(zone.frequency) * 40} // Scaled radius based on frequency
+                                pathOptions={{
+                                    fillColor: zone.color,
+                                    fillOpacity: 0.1 + (zone.frequency / 300), // More frequent = more opaque
+                                    color: 'transparent',
+                                    className: 'risk-heat-circle'
+                                }}
+                            />
+                        )}
+                        <Polygon
+                            positions={zone.path}
+                            pathOptions={{
+                                color: zone.color,
+                                fillColor: zone.color,
+                                fillOpacity: 0.35,
+                                weight: 2
+                            }}
+                        >
+                            <Popup>
+                                <div style={{ minWidth: '150px' }}>
+                                    <h4 style={{ margin: '0 0 5px 0', color: zone.color }}>{zone.name}</h4>
+                                    <p style={{ margin: '0 0 10px 0', fontSize: '0.8rem' }}>{zone.description}</p>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', borderTop: '1px solid #eee', paddingTop: '5px' }}>
+                                        <span>Annual Incidents:</span>
+                                        <span style={{ color: zone.color }}>{zone.frequency}</span>
+                                    </div>
+                                </div>
+                            </Popup>
+                        </Polygon>
+                    </React.Fragment>
                 ))}
 
                 {sourceCoords && (
