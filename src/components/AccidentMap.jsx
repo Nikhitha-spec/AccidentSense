@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2 } from 'lucide-react';
+import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2, X, Info } from 'lucide-react';
 import { ACCIDENT_ZONES, checkZoneIntersection } from '../utils/accidentZones';
 import L from 'leaflet';
 
@@ -108,6 +108,7 @@ const AccidentMap = () => {
     const [isSearchingSource, setIsSearchingSource] = useState(false);
     const [isSearchingDest, setIsSearchingDest] = useState(false);
     const [showRiskHeatmap, setShowRiskHeatmap] = useState(true);
+    const [routeWarning, setRouteWarning] = useState(null);
 
     const watchId = useRef(null);
     const SPEED_THRESHOLD = 80;
@@ -299,6 +300,16 @@ const AccidentMap = () => {
 
         setDangerSegments(newDangerSegments);
         setRouteRisks(Array.from(detectedZones));
+
+        if (detectedZones.size > 0) {
+            setRouteWarning({
+                title: 'SAFETY WARNING',
+                message: `This route passes through ${detectedZones.size} high-risk accident zones.`,
+                zones: Array.from(detectedZones)
+            });
+        } else {
+            setRouteWarning(null);
+        }
     };
 
     const analyzeTraffic = (path, duration, distance) => {
@@ -363,6 +374,23 @@ const AccidentMap = () => {
         setTrafficLevel(null);
         setAccidentRate(null);
         stopSimulation();
+        setRouteWarning(null);
+    };
+
+    // Calculate distance between two points in meters
+    const getDistanceMeters = (p1, p2) => {
+        const R = 6371e3; // metres
+        const φ1 = p1.lat * Math.PI / 180;
+        const φ2 = p2.lat * Math.PI / 180;
+        const Δφ = (p2.lat - p1.lat) * Math.PI / 180;
+        const Δλ = (p2.lng - p1.lng) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
     };
 
     const startSimulation = () => {
@@ -385,11 +413,26 @@ const AccidentMap = () => {
 
                 const zone = checkZoneIntersection(newPos);
 
+                // Advanced logic: Check if any zone is approaching (within 500m)
+                let approachingZone = null;
+                if (!zone) {
+                    approachingZone = ACCIDENT_ZONES.find(z => {
+                        const dist = getDistanceMeters(newPos, z.center);
+                        return dist < 500;
+                    });
+                }
+
                 if (zone) {
                     setActiveAlert({
                         type: 'danger',
                         message: `ENTERING ${zone.name}`,
                         sub: zone.description
+                    });
+                } else if (approachingZone) {
+                    setActiveAlert({
+                        type: 'warning',
+                        message: 'APPROACHING DANGER',
+                        sub: `Careful! ${approachingZone.name} is 500m ahead.`
                     });
                 } else if (speedKmh > SPEED_THRESHOLD) {
                     setActiveAlert({
@@ -426,6 +469,22 @@ const AccidentMap = () => {
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+            {routeWarning && (
+                <div className="top-alert-banner">
+                    <AlertTriangle size={24} />
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>{routeWarning.title}</div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.9 }}>{routeWarning.message}</div>
+                    </div>
+                    <button
+                        onClick={() => setRouteWarning(null)}
+                        style={{ background: 'none', border: 'none', color: 'white', padding: '5px', cursor: 'pointer' }}
+                    >
+                        <X size={20} />
+                    </button>
+                </div>
+            )}
+
             <div className={`controls-panel glass-panel ${!isControlsExpanded ? 'collapsed' : ''}`}>
                 <div className="logo-area" onClick={() => window.innerWidth <= 768 && setIsControlsExpanded(!isControlsExpanded)} style={{ cursor: window.innerWidth <= 768 ? 'pointer' : 'default' }}>
                     <AlertTriangle color="#FF3B30" size={24} />
