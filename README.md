@@ -1,40 +1,58 @@
-# AccidentSense MVP
+# AccidentSense
 
-AccidentSense is a route-accurate safety layer for Google Maps. It uses the Google Maps Directions API to provide navigation while overlaying accident-prone zones and providing real-time safety alerts.
+AccidentSense is a route-accurate safety layer for OpenStreetMap (via Leaflet). It provides intelligent navigation by overlaying accident-prone zones, real-time weather conditions, traffic analysis, and safety risk alerts to ensure a secure journey.
 
-## Features
-- **Precise Routing**: Uses Google Maps native routing behavior.
-- **Accident Awareness**: Visualizes high-risk zones (polygons) and highlights route segments that pass through them (red lines).
-- **Safety Alerts**: Pop-ups monitoring speed violation and zone entry.
-- **Simulation Mode**: "Simulate Drive" button to test the alert system along the generated route.
+## 🚀 Features
 
-## Setup & Run
+- **Precise OSM Routing**: Uses OSRM for accurate driving directions.
+- **Dynamic Map Selection**: Click anywhere on the map to set your Source and Destination.
+- **Accident Awareness**: Visualizes high-risk zones (polygons) and highlights dangerous route segments.
+- **Safety Risk Analysis**: Calculates a "Route Risk Factor" based on your exposure to accident-prone areas.
+- **Real-Time Weather**: Integrated weather forecasting for your destination (Temp, Wind, Conditions).
+- **Traffic Intelligence**: Visualizes traffic density (Orange/Red segments) and Provides overall traffic status.
+- **Live Navigation Mode**: Track your real movemement, monitor speed violations, and get proximity alerts for danger zones.
 
-1. Navigate to the project directory:
+## 🛠 Tech Stack
+
+- **Frontend**: React + Vite
+- **Mapping**: Leaflet + React-Leaflet
+- **Icons**: Lucide-React
+- **APIs**:
+  - Routing: OSRM
+  - Geocoding: Nominatim
+  - Weather: Open-Meteo
+- **Styling**: Glassmorphism CSS Design
+
+## 🚦 Getting Started
+
+1. **Clone the repository**:
    ```bash
+   git clone https://github.com/YOUR_USERNAME/accidentsense.git
    cd accidentsense
    ```
 
-2. Install dependencies (if not already done):
+2. **Install dependencies**:
    ```bash
    npm install
    ```
 
-3. Start the development server:
+3. **Set up Environment**:
+   Create a `.env` file for your API keys (if using Google Maps plugins, though currently optimized for OSM):
+   ```
+   VITE_GOOGLE_MAPS_API_KEY=your_key_here
+   ```
+
+4. **Run the app**:
    ```bash
    npm run dev
    ```
 
-4. Open the link provided (usually `http://localhost:5173`).
+## 📖 Usage
 
-## Usage
-1. Click "Allow" for location access (optional, defaults to SF).
-2. Enter a Source (e.g., "San Francisco City Hall") and Destination.
-3. Click **Route**.
-4. Observe the route. If it crosses an accident zone (Red areas), the segment will turn Red.
-5. Click **▶ Simulate Drive** to watch the user marker move and trigger alerts when entering zones or speeding.
+1. **Pick Source/Dest**: Use the buttons in the sidebar or click directly on the map.
+2. **Route**: Click the **Route** button to generate the path and analyze safety.
+3. **Analyze**: View the Weather, Traffic, and Safety Risk cards that appear in the panel.
+4. **Live Navigation**: Click **Start Live Navigation** to begin real-time position tracking and alert monitoring.
 
-## Tech Stack
-- React + Vite
-- @react-google-maps/api
-- Vanilla CSS with Glassmorphism design
+---
+Developed as a safety-first navigation prototype.
