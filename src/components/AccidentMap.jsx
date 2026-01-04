@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu } from 'lucide-react';
+import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2 } from 'lucide-react';
 import { ACCIDENT_ZONES, checkZoneIntersection } from '../utils/accidentZones';
 import L from 'leaflet';
 
@@ -105,6 +105,8 @@ const AccidentMap = () => {
     const [sourceCoords, setSourceCoords] = useState(null);
     const [destCoords, setDestCoords] = useState(null);
     const [isControlsExpanded, setIsControlsExpanded] = useState(window.innerWidth > 768);
+    const [isSearchingSource, setIsSearchingSource] = useState(false);
+    const [isSearchingDest, setIsSearchingDest] = useState(false);
 
     const watchId = useRef(null);
     const SPEED_THRESHOLD = 80;
@@ -144,17 +146,55 @@ const AccidentMap = () => {
         }
     };
 
-    // Nominatim Geocoding
-    const searchPlaces = async (query, setSuggestions) => {
-        if (query.length < 3) return;
+    // Nominatim Geocoding with local bias and debouncing logic integrated into useEffects
+    const searchPlaces = async (query, setSuggestions, setLoading) => {
+        if (!query || query.length < 3) {
+            setSuggestions([]);
+            return;
+        }
+
+        setLoading(true);
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+            // Add local bias by creating a viewbox around the user's current location (~50km)
+            const bias = userLocation ? `&viewbox=${userLocation.lng - 0.5},${userLocation.lat - 0.5},${userLocation.lng + 0.5},${userLocation.lat + 0.5}` : '';
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5&addressdetails=1${bias}`
+            );
             const data = await response.json();
-            setSuggestions(data);
+
+            // Format data to be more readable
+            const formattedData = data.map(item => ({
+                ...item,
+                main_name: item.address.road || item.address.suburb || item.address.city || item.display_name.split(',')[0],
+                sub_name: item.display_name.split(',').slice(1).join(',').trim()
+            }));
+
+            setSuggestions(formattedData);
         } catch (error) {
             console.error("Geocoding error:", error);
+        } finally {
+            setLoading(false);
         }
     };
+
+    // Debounced Search Effects
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (sourceQuery && !sourceCoords) {
+                searchPlaces(sourceQuery, setSourceSuggestions, setIsSearchingSource);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [sourceQuery]);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            if (destQuery && !destCoords) {
+                searchPlaces(destQuery, setDestSuggestions, setIsSearchingDest);
+            }
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [destQuery]);
 
     const reverseGeocode = async (lat, lng) => {
         try {
@@ -415,41 +455,53 @@ const AccidentMap = () => {
                 </div>
 
                 <div className="inputs-container" style={{ position: 'relative' }}>
-                    <input
-                        className="input-glass"
-                        type="text"
-                        placeholder="Source Location"
-                        value={sourceQuery}
-                        onChange={(e) => {
-                            setSourceQuery(e.target.value);
-                            searchPlaces(e.target.value, setSourceSuggestions);
-                        }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            className="input-glass"
+                            type="text"
+                            placeholder="Source Location"
+                            value={sourceQuery}
+                            onChange={(e) => {
+                                setSourceQuery(e.target.value);
+                                setSourceCoords(null); // Reset coords so we can search again
+                            }}
+                        />
+                        {isSearchingSource && (
+                            <Loader2 className="animate-spin" size={16} style={{ position: 'absolute', right: '12px', top: '14px', opacity: 0.6 }} />
+                        )}
+                    </div>
                     {sourceSuggestions.length > 0 && (
                         <ul className="suggestions-list glass-panel">
                             {sourceSuggestions.map((place, i) => (
                                 <li key={i} onClick={() => handleSelectPlace(place, 'source')}>
-                                    {place.display_name}
+                                    <div style={{ fontWeight: '600' }}>{place.main_name}</div>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{place.sub_name}</div>
                                 </li>
                             ))}
                         </ul>
                     )}
 
-                    <input
-                        className="input-glass"
-                        type="text"
-                        placeholder="Destination"
-                        value={destQuery}
-                        onChange={(e) => {
-                            setDestQuery(e.target.value);
-                            searchPlaces(e.target.value, setDestSuggestions);
-                        }}
-                    />
+                    <div style={{ position: 'relative' }}>
+                        <input
+                            className="input-glass"
+                            type="text"
+                            placeholder="Destination"
+                            value={destQuery}
+                            onChange={(e) => {
+                                setDestQuery(e.target.value);
+                                setDestCoords(null); // Reset coords so we can search again
+                            }}
+                        />
+                        {isSearchingDest && (
+                            <Loader2 className="animate-spin" size={16} style={{ position: 'absolute', right: '12px', top: '14px', opacity: 0.6 }} />
+                        )}
+                    </div>
                     {destSuggestions.length > 0 && (
                         <ul className="suggestions-list glass-panel">
                             {destSuggestions.map((place, i) => (
                                 <li key={i} onClick={() => handleSelectPlace(place, 'dest')}>
-                                    {place.display_name}
+                                    <div style={{ fontWeight: '600' }}>{place.main_name}</div>
+                                    <div style={{ fontSize: '0.75rem', opacity: 0.7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{place.sub_name}</div>
                                 </li>
                             ))}
                         </ul>
