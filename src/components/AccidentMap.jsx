@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, Circle, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2, X, Info } from 'lucide-react';
+import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu, Loader2, X, Info, Volume2, VolumeX } from 'lucide-react';
 import { ACCIDENT_ZONES, checkZoneIntersection } from '../utils/accidentZones';
 import L from 'leaflet';
 
@@ -109,6 +109,7 @@ const AccidentMap = () => {
     const [isSearchingDest, setIsSearchingDest] = useState(false);
     const [showRiskHeatmap, setShowRiskHeatmap] = useState(true);
     const [routeWarning, setRouteWarning] = useState(null);
+    const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
 
     const watchId = useRef(null);
     const SPEED_THRESHOLD = 80;
@@ -135,6 +136,17 @@ const AccidentMap = () => {
             });
         }
     }, []);
+
+    const speak = (text) => {
+        if (isVoiceEnabled && window.speechSynthesis) {
+            // Cancel any current speech
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    };
 
     const fetchWeather = async (lat, lng) => {
         try {
@@ -302,11 +314,13 @@ const AccidentMap = () => {
         setRouteRisks(Array.from(detectedZones));
 
         if (detectedZones.size > 0) {
+            const warningMsg = `This route passes through ${detectedZones.size} high-risk accident zones.`;
             setRouteWarning({
                 title: 'SAFETY WARNING',
-                message: `This route passes through ${detectedZones.size} high-risk accident zones.`,
+                message: warningMsg,
                 zones: Array.from(detectedZones)
             });
+            speak(warningMsg);
         } else {
             setRouteWarning(null);
         }
@@ -423,23 +437,29 @@ const AccidentMap = () => {
                 }
 
                 if (zone) {
+                    const msg = `ENTERING ${zone.name}`;
                     setActiveAlert({
                         type: 'danger',
-                        message: `ENTERING ${zone.name}`,
+                        message: msg,
                         sub: zone.description
                     });
+                    speak(msg + ". " + zone.description);
                 } else if (approachingZone) {
+                    const msg = `APPROACHING DANGER. ${approachingZone.name} is ahead.`;
                     setActiveAlert({
                         type: 'warning',
                         message: 'APPROACHING DANGER',
-                        sub: `Careful! ${approachingZone.name} is 500m ahead.`
+                        sub: `${approachingZone.name} is 500m ahead.`
                     });
+                    speak(msg);
                 } else if (speedKmh > SPEED_THRESHOLD) {
+                    const msg = `SPEED VIOLATION. Slow down!`;
                     setActiveAlert({
                         type: 'warning',
                         message: 'SPEED VIOLATION',
                         sub: `Slow down! Limit is ${SPEED_THRESHOLD} km/h`
                     });
+                    speak(msg);
                 } else {
                     setActiveAlert(null);
                 }
@@ -524,6 +544,37 @@ const AccidentMap = () => {
                             </div>
                         </div>
                     </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: '#4CAF50' }}>Audio Guidance</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '0.65rem', opacity: 0.8 }}>Voice Alerts</span>
+                            <div
+                                onClick={() => setIsVoiceEnabled(!isVoiceEnabled)}
+                                style={{
+                                    width: '34px',
+                                    height: '18px',
+                                    background: isVoiceEnabled ? '#4CAF50' : '#333',
+                                    borderRadius: '10px',
+                                    position: 'relative',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s'
+                                }}
+                            >
+                                <div style={{
+                                    position: 'absolute',
+                                    left: isVoiceEnabled ? '18px' : '2px',
+                                    top: '2px',
+                                    width: '14px',
+                                    height: '14px',
+                                    background: 'white',
+                                    borderRadius: '50%',
+                                    transition: 'all 0.3s'
+                                }} />
+                            </div>
+                        </div>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '5px' }}>
                         <button
                             onClick={() => setSelectionMode('source')}
