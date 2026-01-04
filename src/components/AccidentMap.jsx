@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polygon, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car } from 'lucide-react';
+import { AlertTriangle, Navigation, Search, MapPin, Gauge, CloudRain, Sun, Wind, Thermometer, Car, ChevronDown, ChevronUp, Menu } from 'lucide-react';
 import { ACCIDENT_ZONES, checkZoneIntersection } from '../utils/accidentZones';
 import L from 'leaflet';
 
@@ -104,9 +104,21 @@ const AccidentMap = () => {
     const [destSuggestions, setDestSuggestions] = useState([]);
     const [sourceCoords, setSourceCoords] = useState(null);
     const [destCoords, setDestCoords] = useState(null);
+    const [isControlsExpanded, setIsControlsExpanded] = useState(window.innerWidth > 768);
 
     const watchId = useRef(null);
     const SPEED_THRESHOLD = 80;
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth > 768) {
+                setIsControlsExpanded(true);
+            }
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     useEffect(() => {
         if (navigator.geolocation) {
@@ -373,10 +385,13 @@ const AccidentMap = () => {
 
     return (
         <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-            <div className="controls-panel glass-panel">
-                <div className="logo-area">
+            <div className={`controls-panel glass-panel ${!isControlsExpanded ? 'collapsed' : ''}`}>
+                <div className="logo-area" onClick={() => window.innerWidth <= 768 && setIsControlsExpanded(!isControlsExpanded)} style={{ cursor: window.innerWidth <= 768 ? 'pointer' : 'default' }}>
                     <AlertTriangle color="#FF3B30" size={24} />
-                    <span className="brand-name">AccidentSense (OSM)</span>
+                    <span className="brand-name">AccidentSense</span>
+                    <button className="mobile-toggle">
+                        {isControlsExpanded ? <ChevronUp size={24} /> : <Menu size={24} />}
+                    </button>
                 </div>
 
                 <div style={{ marginBottom: '15px', padding: '10px', background: 'rgba(66, 133, 244, 0.1)', borderRadius: '8px', border: '1px solid rgba(66, 133, 244, 0.2)' }}>
