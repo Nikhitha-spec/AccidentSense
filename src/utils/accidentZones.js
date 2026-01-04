@@ -2,9 +2,10 @@ export const ACCIDENT_ZONES = [
   {
     id: 1,
     name: "Paradise Circle Junction",
+    type: "Merging Hazard",
     description: "High traffic convergence. Frequent merging accidents.",
     riskLevel: "HIGH",
-    frequency: 145, // Number of incidents in last year
+    frequency: 145,
     color: "#FF3B30",
     center: { lat: 17.4410, lng: 78.4890 },
     path: [
@@ -17,6 +18,7 @@ export const ACCIDENT_ZONES = [
   {
     id: 2,
     name: "Panjagutta Main Road",
+    type: "Braking Risk",
     description: "Congested flyover entry. Sudden braking hazard.",
     riskLevel: "MEDIUM",
     frequency: 68,
@@ -32,6 +34,7 @@ export const ACCIDENT_ZONES = [
   {
     id: 3,
     name: "LB Nagar Ring Road",
+    type: "Pedestrian Hazard",
     description: "Heavy vehicle crossing zone. Pedestrian risk high.",
     riskLevel: "HIGH",
     frequency: 112,
@@ -47,6 +50,7 @@ export const ACCIDENT_ZONES = [
   {
     id: 4,
     name: "Cyber Towers Junction",
+    type: "Lane Change Risk",
     description: "Tech hub traffic. High-speed turns and lane changes.",
     riskLevel: "MEDIUM",
     frequency: 85,

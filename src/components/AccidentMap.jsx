@@ -314,7 +314,8 @@ const AccidentMap = () => {
         setRouteRisks(Array.from(detectedZones));
 
         if (detectedZones.size > 0) {
-            const warningMsg = `This route passes through ${detectedZones.size} high-risk accident zones.`;
+            const types = Array.from(new Set(Array.from(detectedZones).map(z => z.type))).join(', ');
+            const warningMsg = `This route passes through ${detectedZones.size} accident zones, involving ${types}.`;
             setRouteWarning({
                 title: 'SAFETY WARNING',
                 message: warningMsg,
@@ -437,19 +438,19 @@ const AccidentMap = () => {
                 }
 
                 if (zone) {
-                    const msg = `ENTERING ${zone.name}`;
+                    const msg = `ENTERING ${zone.name}. ${zone.type} detected.`;
                     setActiveAlert({
                         type: 'danger',
-                        message: msg,
-                        sub: zone.description
+                        message: `ENTERING ${zone.name}`,
+                        sub: `${zone.type}: ${zone.description}`
                     });
                     speak(msg + ". " + zone.description);
                 } else if (approachingZone) {
-                    const msg = `APPROACHING DANGER. ${approachingZone.name} is ahead.`;
+                    const msg = `APPROACHING ${approachingZone.name}. ${approachingZone.type} ahead.`;
                     setActiveAlert({
                         type: 'warning',
                         message: 'APPROACHING DANGER',
-                        sub: `${approachingZone.name} is 500m ahead.`
+                        sub: `${approachingZone.type} at ${approachingZone.name} is 500m ahead.`
                     });
                     speak(msg);
                 } else if (speedKmh > SPEED_THRESHOLD) {
@@ -872,6 +873,9 @@ const AccidentMap = () => {
                             <Popup>
                                 <div style={{ minWidth: '150px' }}>
                                     <h4 style={{ margin: '0 0 5px 0', color: zone.color }}>{zone.name}</h4>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 'bold', color: zone.color, background: `${zone.color}22`, padding: '2px 8px', borderRadius: '4px', marginBottom: '8px', display: 'inline-block' }}>
+                                        {zone.type}
+                                    </div>
                                     <p style={{ margin: '0 0 10px 0', fontSize: '0.8rem' }}>{zone.description}</p>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold', borderTop: '1px solid #eee', paddingTop: '5px' }}>
                                         <span>Annual Incidents:</span>
