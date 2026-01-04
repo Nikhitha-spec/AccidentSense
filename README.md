@@ -70,7 +70,33 @@ Open your browser and visit: `http://localhost:5173`
 
 ---
 
-## 📖 Usage Guide
+## � Docker Deployment
+
+You can also run **AccidentSense** using Docker for a consistent production-ready environment.
+
+### 1. Build and Run with Docker Compose
+Ensuring you have Docker installed, run:
+```bash
+docker-compose up -d --build
+```
+This will build the image and start a container.
+
+### 2. Access the Application
+The app will be available at: `http://localhost:8080`
+
+### 3. Build Manually (Optional)
+If you prefer to use the Docker CLI directly:
+```bash
+# Build the image
+docker build -t accidentsense .
+
+# Run the container
+docker run -d -p 8080:80 --name accidentsense-container accidentsense
+```
+
+---
+
+## �📖 Usage Guide
 
 1. **Set Locations**: Click the **"Pick Source"** or **"Pick Dest"** button, then click any point on the map to set your markers.
 2. **Generate Route**: Click the **"Route"** button. The app will calculate the path and perform a safety/weather audit.

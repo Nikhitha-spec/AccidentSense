@@ -1,0 +1,7 @@
+services:
+  accidentsense:
+    build: .
+    ports:
+      - "8080:80"
+    container_name: accidentsense-app
+    restart: always
